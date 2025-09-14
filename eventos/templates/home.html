@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Homepage</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/dise.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light px-3">
+        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <img src="https://uees.edu.ec/wp-content/uploads/2021/03/logo-uees-blanco-index.png" alt="UESS" class="navbar-logo">
+
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded btn-logout">
+                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            </button>
+        </form>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Saludo -->
+        <h3 class="welcome-section">Bienvenido, {{ user.username }}!</h3>
+        <h3 class="welcome-role">Rol: {{ user.rol }}</h3>
+        <div class="section-divider"></div>
+
+        {% if user.rol == 'admin' %}
+            <a href="#" class="btn btn-primary mb-3">Crear Evento</a>
+        {% endif %}
+
+        <h3 class="events-title">Eventos</h3>
+
+        <div class="event-controls mb-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Buscar eventos">
+            <div class="mt-2">
+                <button id="btnCards" class="btn btn-outline-primary">Vista Tarjeta</button>
+                <button id="btnCalendar" class="btn btn-outline-secondary">Vista Calendario</button>
+            </div>
+        </div>
+
+        <!-- Contenedor TARJETAS -->
+        <div id="eventRow" class="row">
+            {% for evento in eventos %}
+            <div class="col-md-4 mb-4">
+                <div class="card event-card h-100 shadow-sm rounded-lg">
+                    {% if evento.imagen_url %}
+                    <div class="card-img-top-wrapper">
+                        <img src="{{ evento.imagen_url }}" class="card-img-top" alt="{{ evento.titulo }}">
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ evento.titulo }}</h5>
+                        <p class="card-text">{{ evento.descripcion|truncatewords:20 }}</p>
+                        <p class="card-text"><small class="text-muted">{{ evento.tipo_evento|capfirst }}</small></p>
+                        <a href="#" class="btn btn-primary btn-block mt-2">Ver más</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <p>No hay eventos aún.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Contenedor CALENDARIO (oculto al inicio) -->
+        <div id="calendarContainer" style="display:none;">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnCards = document.getElementById('btnCards');
+            const btnCalendar = document.getElementById('btnCalendar');
+            const eventRow = document.getElementById('eventRow');
+            const calendarContainer = document.getElementById('calendarContainer');
+            const input = document.getElementById('searchInput');
+
+            // === Búsqueda solo por título ===
+            input.addEventListener('input', () => {
+                const filter = input.value.toLowerCase().trim();
+                document.querySelectorAll('#eventRow .col-md-4').forEach(card => {
+                    const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+                    card.style.display = title.includes(filter) ? 'block' : 'none';
+                });
+            });
+
+            // === Alternar vistas ===
+            btnCalendar.addEventListener('click', () => {
+                eventRow.style.display = 'none';
+                calendarContainer.style.display = 'block';
+                renderCalendar();
+            });
+
+            btnCards.addEventListener('click', () => {
+                eventRow.style.display = 'flex';
+                calendarContainer.style.display = 'none';
+            });
+
+            // === Renderizar calendario con eventos ===
+            function renderCalendar() {
+                if (document.getElementById('calendar').children.length > 0) return;
+
+                const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    events: [
+                        {% for evento in eventos %}
+                        {
+                            title: "{{ evento.titulo|escapejs }}",
+                            start: "{{ evento.fecha_inicio|date:'Y-m-d' }}",
+                            end: "{{ evento.fecha_fin|default:evento.fecha_inicio|date:'Y-m-d' }}",
+                            url: "#"
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    height: 600,
+                    eventColor: '#007bff',
+                });
+
+                calendar.render();
+            }
+        });
+    </script>
+</body>
+</html>

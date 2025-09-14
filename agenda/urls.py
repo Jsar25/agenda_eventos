@@ -16,8 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from eventos.views import home
+from usuarios.views import CustomLoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('usuarios/', include('usuarios.urls')),
+    path('', CustomLoginView.as_view(), name='login'),
+    path('', include('eventos.urls'))
+#   path('', home, name='home')
+    
 ]

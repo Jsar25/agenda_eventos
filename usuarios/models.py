@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractUser
 class Usuario(AbstractUser):
     ROLES = (
         ('admin', 'Administrador'),
+        ('organizador', 'Organizador'),
         ('estudiante', 'Estudiante')
     )
 

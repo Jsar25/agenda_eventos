@@ -1,0 +1,126 @@
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* separa izquierda y derecha */
+    background-color: #8a1016;
+    padding: 0.5rem 1rem;
+}
+
+.navbar-logo {
+    height: 40px;
+    margin-left: 1rem; /* espacio entre botón menú y logo */
+}
+
+.btn-logout {
+    transition: all 0.2s;
+}
+
+.btn-logout:hover {
+    background-color: #dc3545; /* rojo */
+    color: white;
+}
+
+
+
+
+
+
+
+/* Tarjetas */
+.event-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.event-card .card-img-top {
+    height: 180px;
+    object-fit: cover;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.event-card .card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.event-card .card-text {
+    font-size: 0.95rem;
+    color: #555;
+}
+
+
+
+
+
+
+
+
+.welcome-section {
+    font-size: 3rem;       /* Título grande */
+    font-weight: 900;
+    margin-bottom: 6px;
+    color: #000000;
+}
+
+.welcome-role {
+    font-size: 2rem;
+    font-style: italic;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.section-divider {
+    border-bottom: 2px solid #1b0606;
+    margin: 20px 0;
+}
+
+
+
+.events-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #222;
+}
+
+.event-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.event-controls input[type="text"] {
+    width: 50%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.event-controls .btn {
+    border-radius: 8px;
+    margin-left: 5px;
+}
+
+.btn-logout {
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.9rem;
+    background-color: transparent;
+    color: rgb(255, 255, 255);
+    border: none;
+}
+
+.btn-logout:hover {
+    background-color: #fffdfd;
+    color: rgb(0, 0, 0);
+}
+
+

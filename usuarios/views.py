@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
+from django.shortcuts import redirect
 
 # Create your views here.
 
@@ -9,6 +10,4 @@ class CustomLoginView(LoginView):
 
     def get_success_url(self):
 
-        if self.request.user.rol == 'admin':
-            return reverse_lazy('panel_admin')
-        return reverse_lazy('calendario')
+        return '/home/'
