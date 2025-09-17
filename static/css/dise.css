@@ -1,3 +1,4 @@
+/* ================= NAVBAR ================= */
 .navbar {
     display: flex;
     align-items: center;
@@ -11,57 +12,22 @@
     margin-left: 1rem; /* espacio entre botón menú y logo */
 }
 
+/* Botón de logout */
 .btn-logout {
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.9rem;
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
     transition: all 0.2s;
 }
-
 .btn-logout:hover {
-    background-color: #dc3545; /* rojo */
-    color: white;
+    background-color: #fffdfd;
+    color: #000000;
 }
 
-
-
-
-
-
-
-/* Tarjetas */
-.event-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.event-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-
-.event-card .card-img-top {
-    height: 180px;
-    object-fit: cover;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-}
-
-.event-card .card-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-}
-
-.event-card .card-text {
-    font-size: 0.95rem;
-    color: #555;
-}
-
-
-
-
-
-
-
-
+/* ================= SECCIÓN DE BIENVENIDA ================= */
 .welcome-section {
     font-size: 3rem;       /* Título grande */
     font-weight: 900;
@@ -81,13 +47,19 @@
     margin: 20px 0;
 }
 
-
+/* ================= EVENTOS - TÍTULO Y CONTROLES ================= */
+.container {
+    max-width: 1200px;
+}
 
 .events-title {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
-    margin-bottom: 15px;
+    margin-top: 40px;        /* separación respecto al saludo */
+    margin-bottom: 20px;
     color: #222;
+    border-bottom: 3px solid #8a1016;  /* subrayado distintivo */
+    padding-bottom: 6px;
 }
 
 .event-controls {
@@ -105,22 +77,103 @@
 }
 
 .event-controls .btn {
-    border-radius: 8px;
+    border-radius: 10px;
     margin-left: 5px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
 }
 
-.btn-logout {
+/* ================= BOTONES GENERALES ================= */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+.btn-outline-primary,
+.btn-outline-secondary {
+    border-width: 2px;
+}
+.btn-outline-primary:hover {
+    background-color: #8a1016;
+    border-color: #8a1016;
+    color: #fff;
+}
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+/* ================= TARJETAS DE EVENTOS ================= */
+.event-card {
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background-color: #ebe5e5;
+    transition: transform 0.25s, box-shadow 0.25s;
+    margin-bottom: 30px;       /* separación vertical entre tarjetas */
+}
+.event-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+.event-card .card-body {
+    padding: 20px;
+}
+
+#eventRow {
+    gap: 1.5rem; /* espacio horizontal entre columnas (si flex lo soporta) */
+}
+
+.event-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.event-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.event-card .card-text {
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* Botón “Ver más” dentro de la tarjeta */
+.event-card .btn-primary {
     border-radius: 8px;
-    padding: 5px 12px;
-    font-size: 0.9rem;
-    background-color: transparent;
-    color: rgb(255, 255, 255);
-    border: none;
+    background-color: #8a1016;
+    border-color: #8a1016;
 }
-
-.btn-logout:hover {
-    background-color: #fffdfd;
-    color: rgb(0, 0, 0);
+.event-card .btn-primary:hover {
+    background-color: #a61b22;
+    border-color: #a61b22;
 }
 
 
+/* Botones de vista */
+.view-toggle button {
+    background-color: #4A90E2;      
+    color: #fff;                  
+    border: none;                  
+    padding: 8px 16px;              
+    margin-right: 8px;             
+    border-radius: 20px;           
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.view-toggle button:hover {
+    background-color: #357ABD;      
+    transform: translateY(-2px);
+}
+
+.view-toggle button.active {
+    background-color: #2C5F9E;
+}
