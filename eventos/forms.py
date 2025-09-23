@@ -1,37 +1,26 @@
-# views.py
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.core.mail import send_mail
+from django import forms
 from .models import Evento, RegistroEvento
-from .forms import RegistroEventoForm
 
-@require_POST
-def registrar_evento(request, evento_id):
-    evento = get_object_or_404(Evento, pk=evento_id)
-    form = RegistroEventoForm(request.POST)
-    if form.is_valid():
-        registro = form.save(commit=False)
-        registro.evento = evento
+class EventoForm(forms.ModelForm):
+    class Meta:
+        model = Evento
+        fields = ['titulo', 'descripcion', 'fecha_inicio', 'fecha_fin', 'lugar', 'tipo_evento', 'capacidad_num', 'imagen_url']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título del evento'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del evento'}),
+            'fecha_inicio': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'fecha_fin': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'lugar': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Lugar del evento'}),
+            'tipo_evento': forms.Select(attrs={'class': 'form-control'}),
+            'capacidad_num': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'imagen_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'URL de la imagen (opcional)'}),
+        }
 
-        # opcional: evitar registros duplicados por correo en el mismo evento
-        if RegistroEvento.objects.filter(evento=evento, correo=registro.correo).exists():
-            return JsonResponse({'status': 'error', 'message': 'Ya estás registrado en este evento.'}, status=400)
-
-        registro.save()
-
-        # enviar correo (fail_silently True en dev; en prod manejar errores)
-        try:
-            send_mail(
-                'Confirmación de registro',
-                f'Hola {registro.nombre},\n\nTu registro en "{evento.titulo}" se ha recibido correctamente.\n\nGracias.',
-                None,  # usa DEFAULT_FROM_EMAIL
-                [registro.correo],
-                fail_silently=True
-            )
-        except Exception:
-            pass
-
-        return JsonResponse({'status': 'ok'})
-    else:
-        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+class RegistroEventoForm(forms.ModelForm):
+    class Meta:
+        model = RegistroEvento
+        fields = ['nombre', 'correo']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre completo'}),
+            'correo': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'tu@email.com'}),
+        }

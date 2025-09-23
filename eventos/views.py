@@ -1,11 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.mail import send_mail
-from eventos.models import RegistroEvento
-from eventos.models import Evento
-from django.contrib.auth.models import User
-
+from eventos.models import RegistroEvento, Evento
+from .forms import EventoForm
 
 def home(request):
     user = request.user
@@ -18,7 +18,53 @@ def home(request):
 
     return render(request, 'home.html', context)
 
+@login_required
+def crear_evento(request):
+    # Verificar que el usuario es administrador
+    if request.user.rol != 'admin':
+        messages.error(request, 'No tienes permisos para crear eventos.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form = EventoForm(request.POST)
+        if form.is_valid():
+            evento = form.save(commit=False)
+            evento.creador = request.user  # Asignar el usuario actual como creador
+            evento.save()
+            messages.success(request, 'Evento creado exitosamente!')
+            return redirect('home')
+        else:
+            # Agregar mensajes de error específicos para cada campo
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+            return redirect('home')
+    else:
+        # Si es GET, redirigir a home (no debería pasar con modal)
+        return redirect('home')
 
+@login_required
+def eliminar_evento(request, evento_id):
+    # Verificar permisos de administrador
+    if request.user.rol != 'admin':
+        messages.error(request, 'No tienes permisos para eliminar eventos.')
+        return redirect('home')
+    
+    # Solo permitir método POST
+    if request.method == 'POST':
+        try:
+            evento = Evento.objects.get(id=evento_id)
+            titulo_evento = evento.titulo
+            evento.delete()
+            messages.success(request, f'Evento "{titulo_evento}" eliminado exitosamente.')
+            
+        except Evento.DoesNotExist:
+            messages.error(request, 'El evento no existe o ya fue eliminado.')
+            
+    else:
+        messages.error(request, 'Método no permitido para eliminar eventos.')
+    
+    return redirect('home')
 
 @csrf_exempt
 def registrar_evento(request, evento_id):

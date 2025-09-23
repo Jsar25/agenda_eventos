@@ -6,18 +6,19 @@
     <title>Homepage</title>
     <link rel="icon" type="image/png" href="https://portal.uees.edu.ec/ords/r/ctsi/217/files/static/v621/icons/app-icon-32.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'css/dise.css' %}">
     <script src="{% static 'js/main.js' %}"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar px-3">
-        
-        <a href="#" class="btn btn-outline-danger btn-logout me-3 btn-lg 
-   {% if user.rol != 'admin' %}invisible{% endif %}">
-    <i class="bi bi-plus-circle"></i> Crear Evento
-</a>
-
+        <!-- Botón crear evento solo para administradores -->
+        {% if user.rol == 'admin' %}
+        <button type="button" class="btn btn-outline-danger btn-logout me-3 btn-lg" data-bs-toggle="modal" data-bs-target="#crearEventoModal">
+            <i class="bi bi-plus-circle"></i> Crear Evento
+        </button>
+        {% endif %}
 
         <img src="https://uees.edu.ec/wp-content/uploads/2021/03/logo-uees-blanco-index.png" alt="UESS" class="navbar-logo">
         <form method="post" action="{% url 'logout' %}">
@@ -48,13 +49,28 @@
                     <h4 class="card-title">{{ evento.titulo }}</h4>
                     <p class="card-text">{{ evento.descripcion|truncatewords:20 }}</p>
                     <p class="card-text"><strong>Ubicación: </strong>{{ evento.lugar}}</p>
-                    <button class="btn btn-primary btn-open-register"
-                        data-event-id="{{ evento.id }}"
-                        data-event-title="{{ evento.titulo }}"
-                        data-event-fecha="{{ evento.fecha_inicio|date:'Y-m-d H:i' }}"
-                        data-capacidad_num="{{ evento.capacidad_num }}">                        
-                        Registrarse
-                    </button>
+                    
+                    <!-- Botones de acción -->
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-primary btn-open-register"
+                            data-event-id="{{ evento.id }}"
+                            data-event-title="{{ evento.titulo }}"
+                            data-event-fecha="{{ evento.fecha_inicio|date:'Y-m-d H:i' }}"
+                            data-capacidad_num="{{ evento.capacidad_num }}">                        
+                            Registrarse
+                        </button>
+                        
+                        <!-- Botón eliminar solo para administradores -->
+                        {% if user.rol == 'admin' %}
+                        <button class="btn btn-danger btn-sm btn-eliminar" 
+                                data-event-id="{{ evento.id }}" 
+                                data-event-title="{{ evento.titulo }}"
+                                title="Eliminar evento">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                        {% endif %}
+                    </div>
+                    
                     <div class="card-footer text-muted mt-3" >
                         <b>Cupo: </b> {{evento.capacidad_num}}
                     </div>
@@ -217,11 +233,123 @@ btnCalendario.onclick = () => {
     }, 100);
 };
 
-
+// === JavaScript para Eliminar Eventos ===
+document.querySelectorAll('.btn-eliminar').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const eventoId = this.getAttribute('data-event-id');
+        const eventoTitulo = this.getAttribute('data-event-title');
+        
+        // Confirmación antes de eliminar
+        if (confirm(`¿Estás seguro que deseas eliminar el evento "${eventoTitulo}"?\n\nEsta acción no se puede deshacer.`)) {
+            // Crear formulario para envío POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/eventos/${eventoId}/eliminar/`;
+            
+            // Agregar token CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            // Agregar al DOM y enviar
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+});
 
 
 
 </script>
+
+<!-- Modal Crear Evento -->
+{% if user.rol == 'admin' %}
+<div class="modal fade" id="crearEventoModal" tabindex="-1" aria-labelledby="crearEventoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearEventoModalLabel">
+                    <i class="bi bi-calendar-plus"></i> Crear Nuevo Evento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'crear_evento' %}" id="crearEventoForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="id_titulo" class="form-label">Título del Evento</label>
+                            <input type="text" class="form-control" id="id_titulo" name="titulo" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="id_descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="id_descripcion" name="descripcion" rows="3" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_fecha_inicio" class="form-label">Fecha de Inicio</label>
+                            <input type="datetime-local" class="form-control" id="id_fecha_inicio" name="fecha_inicio" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_fecha_fin" class="form-label">Fecha de Fin</label>
+                            <input type="datetime-local" class="form-control" id="id_fecha_fin" name="fecha_fin">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_lugar" class="form-label">Lugar</label>
+                            <input type="text" class="form-control" id="id_lugar" name="lugar" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_tipo_evento" class="form-label">Tipo de Evento</label>
+                            <select class="form-control" id="id_tipo_evento" name="tipo_evento" required>
+                                <option value="">Selecciona un tipo</option>
+                                <option value="conferencia">Conferencia</option>
+                                <option value="taller">Taller</option>
+                                <option value="capacitacion">Capacitación</option>
+                                <option value="evento_deportivo">Evento Deportivo</option>
+                                <option value="evento_cultural">Evento Cultural</option>
+                                <option value="seminario">Seminario</option>
+                                <option value="reunion">Reunión</option>
+                                <option value="ceremonia">Ceremonia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_capacidad_num" class="form-label">Capacidad</label>
+                            <input type="number" class="form-control" id="id_capacidad_num" name="capacidad_num" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_imagen_url" class="form-label">URL de Imagen (opcional)</label>
+                            <input type="url" class="form-control" id="id_imagen_url" name="imagen_url">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="submit" form="crearEventoForm" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Crear Evento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 </body>
 </html>
