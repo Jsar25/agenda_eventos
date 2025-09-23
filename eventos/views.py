@@ -29,12 +29,21 @@ def registrar_evento(request, evento_id):
         try:
             evento = Evento.objects.get(id=evento_id)
 
+            #Se verifica disponibilidad de cupos
+            if evento.capacidad_num <= 0:
+                return JsonResponse({'status': 'error',
+                                     'mensaje': 'No hay cupos disponibles'
+                }, status=400)
+
             # Guardar registro
             RegistroEvento.objects.create(
                 evento=evento,
                 nombre=nombre,
                 correo=correo
             )
+
+            evento.capacidad_num -= 1
+            evento.save(update_fields=['capacidad_num'])
 
             # Enviar correo de confirmación
             asunto = f"Confirmación de registro: {evento.titulo}"
