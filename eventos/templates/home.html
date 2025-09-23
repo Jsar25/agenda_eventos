@@ -12,9 +12,12 @@
 </head>
 <body>
     <nav class="navbar px-3">
-        <a href="#" class="btn btn-outline-danger btn-logout me-3 btn-lg">
-            <i class="bi bi-plus-circle"></i> Crear Evento
-        </a>
+        
+        <a href="#" class="btn btn-outline-danger btn-logout me-3 btn-lg 
+   {% if user.rol != 'admin' %}invisible{% endif %}">
+    <i class="bi bi-plus-circle"></i> Crear Evento
+</a>
+
 
         <img src="https://uees.edu.ec/wp-content/uploads/2021/03/logo-uees-blanco-index.png" alt="UESS" class="navbar-logo">
         <form method="post" action="{% url 'logout' %}">
