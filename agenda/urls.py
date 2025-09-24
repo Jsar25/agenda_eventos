@@ -16,14 +16,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from eventos.views import home
+from eventos.views import home, eliminar_evento  # Importar la vista eliminar_evento
 from usuarios.views import CustomLoginView
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+
+# Vista simple para redirigir a la página de inicio
+def redirect_to_login(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    else:
+        return redirect('login')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('usuarios/', include('usuarios.urls')),
-    path('', CustomLoginView.as_view(), name='login'),
-    path('', include('eventos.urls'))
-#   path('', home, name='home')
-    
+    path('eventos/<int:evento_id>/eliminar/', eliminar_evento, name='eliminar_evento'),  # URL directa para eliminar eventos
+    path('eventos/', include('eventos.urls')),
+    path('login/', CustomLoginView.as_view(), name='login'),
+    # Cambiamos la URL raíz para que redirija al login cuando sea necesario
+    path('', redirect_to_login, name='root'),
+    path('home/', login_required(home), name='home'),
 ]

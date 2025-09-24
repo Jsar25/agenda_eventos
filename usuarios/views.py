@@ -9,5 +9,4 @@ class CustomLoginView(LoginView):
     template_name = 'usuarios/login.html'
 
     def get_success_url(self):
-
-        return '/home/'
+        return '/'

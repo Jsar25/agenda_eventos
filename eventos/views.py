@@ -4,9 +4,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.utils import timezone
+from datetime import timedelta
 from eventos.models import RegistroEvento, Evento
 from .forms import EventoForm
 
+@login_required
 def home(request):
     user = request.user
     eventos = Evento.objects.all() #Esto sirve para traer todos los eventos
@@ -16,7 +19,7 @@ def home(request):
         'eventos': eventos
     }
 
-    return render(request, 'home.html', context)
+    return render(request, 'eventos/home.html', context)
 
 @login_required
 def crear_evento(request):
@@ -30,6 +33,11 @@ def crear_evento(request):
         if form.is_valid():
             evento = form.save(commit=False)
             evento.creador = request.user  # Asignar el usuario actual como creador
+            
+            # Si no se proporciona fecha_fin, usar fecha_inicio + 1 hora
+            if not evento.fecha_fin:
+                evento.fecha_fin = evento.fecha_inicio + timedelta(hours=1)
+            
             evento.save()
             messages.success(request, 'Evento creado exitosamente!')
             return redirect('home')
@@ -58,11 +66,22 @@ def eliminar_evento(request, evento_id):
             evento.delete()
             messages.success(request, f'Evento "{titulo_evento}" eliminado exitosamente.')
             
+            # Si es una solicitud AJAX, devolver JSON
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'ok', 'mensaje': f'Evento "{titulo_evento}" eliminado exitosamente.'})
+                
         except Evento.DoesNotExist:
             messages.error(request, 'El evento no existe o ya fue eliminado.')
             
+            # Si es una solicitud AJAX, devolver JSON con error
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'mensaje': 'El evento no existe o ya fue eliminado.'}, status=404)
     else:
         messages.error(request, 'Método no permitido para eliminar eventos.')
+        
+        # Si es una solicitud AJAX, devolver JSON con error
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido para eliminar eventos.'}, status=405)
     
     return redirect('home')
 

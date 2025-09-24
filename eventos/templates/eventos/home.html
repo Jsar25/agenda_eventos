@@ -1,0 +1,579 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Homepage</title>
+    <link rel="icon" type="image/png" href="https://portal.uees.edu.ec/ords/r/ctsi/217/files/static/v621/icons/app-icon-32.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/dise.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    
+    <!-- Estilos adicionales para el calendario -->
+    <style>
+        /* Estilos para asegurar que el calendario sea visible */
+        .calendar-section {
+            background-color: white;
+            padding: 0;
+            margin: 0 0 2rem 0;
+        }
+        
+        .calendar-wrapper {
+            height: 650px !important;
+            width: 100% !important;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Mejoras visuales para los botones de vista */
+        .view-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 2rem;
+        }
+        
+        .view-toggle .btn {
+            margin-left: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+        }
+        
+        .view-toggle .btn.active {
+            background-color: var(--uees-primary);
+            color: white;
+            border-color: var(--uees-primary);
+        }
+        
+        .view-toggle .btn:not(.active) {
+            border-color: var(--uees-primary);
+            color: var(--uees-primary);
+        }
+        
+        /* Estilos similares al diseño de referencia */
+        .fc .fc-toolbar {
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+        
+        .fc .fc-toolbar-title {
+            font-size: 1.5rem;
+            color: var(--uees-primary);
+        }
+        
+        .fc .fc-button-primary {
+            background-color: var(--uees-primary);
+            border-color: var(--uees-primary);
+        }
+        
+        .fc .fc-button-primary:hover {
+            background-color: #6d0e14;
+            border-color: #6d0e14;
+        }
+        
+        .fc-direction-ltr .fc-button-group > .fc-button:not(:last-child) {
+            border-right-color: #a8283a;
+        }
+        
+        .fc .fc-day-today {
+            background-color: rgba(138, 16, 22, 0.05) !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar px-3">
+        <!-- Botón crear evento solo para administradores -->
+        {% if user.rol == 'admin' %}
+        <button type="button" class="btn btn-outline-danger btn-logout me-3 btn-lg" data-bs-toggle="modal" data-bs-target="#crearEventoModal">
+            <i class="bi bi-plus-circle"></i> Crear Evento
+        </button>
+        {% endif %}
+
+        <img src="https://uees.edu.ec/wp-content/uploads/2021/03/logo-uees-blanco-index.png" alt="UESS" class="navbar-logo">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-logout btn-lg">
+                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+        </button>
+    </form>
+    </nav>
+
+<main class="container">
+    <!-- Sección Hero -->
+    <section class="hero-section">
+        <h1 class="hero-title">Bienvenido, {{ user.username }}!</h1>
+        <p class="text-body">Explora y regístrate en los eventos disponibles de la Universidad de Especialidades Espíritu Santo.</p>
+    </section>
+
+    <!-- Controles de vista -->
+    <div class="view-toggle mb-4">
+        <button id="btnTarjeta" class="btn btn-outline-primary active">
+            <i class="bi bi-grid-3x3-gap"></i> Vista Tarjeta
+        </button>
+        <button id="btnCalendario" class="btn btn-outline-primary">
+            <i class="bi bi-calendar3"></i> Vista Calendario
+        </button>
+    </div>
+
+    <!-- Contenedor principal que alterna entre vistas -->
+    <div class="view-container">
+        <!-- Sección de eventos en tarjetas -->
+        <section id="eventRow" class="row">
+            {% for evento in eventos %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <article class="card h-100">
+                    {% if evento.imagen_url %}
+                        <img src="{{ evento.imagen_url }}" class="card-img-top" alt="Imagen del evento {{ evento.titulo }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h3 class="card-title">{{ evento.titulo }}</h3>
+                        <p class="card-text text-truncate-2">{{ evento.descripcion }}</p>
+                        <div class="text-caption mb-3">
+                            <div class="mb-1">
+                                <i class="bi bi-geo-alt"></i> <strong>Ubicación:</strong> {{ evento.lugar }}
+                            </div>
+                            <div>
+                                <i class="bi bi-calendar-event"></i> <strong>Fecha:</strong> {{ evento.fecha_inicio|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="btn-action-group">
+                            <button class="btn btn-primary btn-open-register focus-visible"
+                                data-event-id="{{ evento.id }}"
+                                data-event-title="{{ evento.titulo }}"
+                                data-event-fecha="{{ evento.fecha_inicio|date:'Y-m-d H:i' }}"
+                                data-capacidad_num="{{ evento.capacidad_num }}"
+                                aria-label="Registrarse en {{ evento.titulo }}">                        
+                                <i class="bi bi-person-plus"></i> Registrarse
+                            </button>
+                            
+                            <!-- Botón eliminar solo para administradores -->
+                            {% if user.rol == 'admin' %}
+                            <button class="btn btn-danger btn-eliminar focus-visible" 
+                                    data-event-id="{{ evento.id }}" 
+                                    data-event-title="{{ evento.titulo }}"
+                                    title="Eliminar evento {{ evento.titulo }}"
+                                    aria-label="Eliminar evento {{ evento.titulo }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <i class="bi bi-people"></i> <strong>Cupos disponibles:</strong> {{ evento.capacidad_num }}
+                    </div>
+                </article>
+            </div>
+            {% endfor %}
+        </section>
+
+        <!-- Sección del calendario -->
+        <section id="calendarContainer" class="calendar-section d-none">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h2 class="h4 m-0">Calendario de Eventos</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div id="calendar" class="calendar-wrapper"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Modal de registro -->
+<div class="modal fade" id="registroModal" tabindex="-1" aria-labelledby="registroModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formRegistro">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h2 class="modal-title" id="registroModalLabel">
+                        <i class="bi bi-person-plus-fill me-2"></i>Registro al Evento
+                    </h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="evento_id" name="evento_id">
+                    
+                    <div class="mb-3">
+                        <label for="event_titulo" class="form-label">Evento</label>
+                        <input type="text" id="event_titulo" readonly class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="event_fecha" class="form-label">Fecha y hora</label>
+                        <input type="text" id="event_fecha" readonly class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacidad_num" class="form-label">Cupos disponibles</label>
+                        <input type="text" name="capacidad_num" id="capacidad_num" readonly class="form-control">
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="mb-3">
+                        <label for="id_nombre" class="form-label">Nombre completo *</label>
+                        <input type="text" name="nombre" id="id_nombre" class="form-control focus-visible" required 
+                               placeholder="Ingresa tu nombre completo">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_correo" class="form-label">Correo electrónico *</label>
+                        <input type="email" name="correo" id="id_correo" class="form-control focus-visible" required 
+                               placeholder="ejemplo@uees.edu.ec">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Confirmar registro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+<script>
+// Datos de eventos para FullCalendar
+const eventosData = [
+    {% for evento in eventos %}{
+        title: "{{ evento.titulo|escapejs }}",
+        start: "{{ evento.fecha_inicio|date:'Y-m-d' }}",
+        extendedProps: {
+            id: "{{ evento.id }}",
+            titulo: "{{ evento.titulo|escapejs }}",
+            fecha: "{{ evento.fecha_inicio|date:'Y-m-d H:i' }}",
+            capacidad_num: "{{ evento.capacidad_num }}"
+        }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM cargado completamente - Inicializando aplicación');
+
+    const registroModal = new bootstrap.Modal(document.getElementById('registroModal'));
+
+    // BOTONES DE TARJETAS
+    document.querySelectorAll('.btn-open-register').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            document.getElementById('evento_id').value = btn.dataset.eventId;
+            document.getElementById('event_titulo').value = btn.dataset.eventTitle;
+            document.getElementById('event_fecha').value = btn.dataset.eventFecha;
+            document.getElementById('capacidad_num').value = btn.dataset.capacidad_num;
+            registroModal.show();
+        });
+    });
+
+    // Variable global para el calendario
+    let calendar = null;
+    
+    // Función para inicializar el calendario
+    function initializeCalendar() {
+        console.log('Inicializando calendario...');
+        
+        // Verificar si el calendario ya existe
+        if (calendar !== null) {
+            console.log('Calendario ya inicializado, actualizando...');
+            calendar.updateSize();
+            return;
+        }
+        
+        // Obtener el elemento del DOM
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) {
+            console.error('Error crítico: No se encontró el elemento del calendario en el DOM');
+            return;
+        }
+        
+        console.log('Creando instancia de FullCalendar con', eventosData.length, 'eventos');
+        
+        // Crear instancia de FullCalendar
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: eventosData,
+            height: 650, // Altura fija para mejor visualización
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            locale: 'es', // Usar español
+            timeZone: 'local',
+            themeSystem: 'bootstrap5',
+            dayMaxEvents: true, // Permitir "más" link cuando hay muchos eventos
+            navLinks: true, // Permitir hacer clic en días/semanas
+            eventDisplay: 'block',
+            eventColor: '#8a1016', // Color principal UEES
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                const props = info.event.extendedProps;
+                document.getElementById('evento_id').value = props.id;
+                document.getElementById('event_titulo').value = props.titulo;
+                document.getElementById('event_fecha').value = props.fecha;
+                document.getElementById('capacidad_num').value = props.capacidad_num;
+                registroModal.show();
+            }
+        });
+        
+        // Renderizar el calendario
+        try {
+            calendar.render();
+            console.log('✅ FullCalendar renderizado exitosamente');
+        } catch (error) {
+            console.error('❌ Error al renderizar el calendario:', error);
+        }
+    }
+
+    // AJAX FORM
+    document.getElementById('formRegistro').addEventListener('submit', e => {
+        e.preventDefault();
+        const eventoId = document.getElementById('evento_id').value;
+        const formData = new FormData(e.target);
+        fetch("{% url 'registrar_evento' 0 %}".replace('0', eventoId), {
+            method: 'POST',
+            headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.status === 'ok'){
+                alert('Registro exitoso, se enviará un correo');
+                registroModal.hide();
+                e.target.reset();
+            } else {
+                alert('Error: ' + (data.mensaje || 'Verifica los datos.'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error de red o servidor');
+            console.log(err)
+        });
+    });
+
+    // === CONTROL DE VISTAS (TARJETA/CALENDARIO) ===
+    const eventRow = document.getElementById('eventRow');
+    const calendarContainer = document.getElementById('calendarContainer');
+    const btnTarjeta = document.getElementById('btnTarjeta');
+    const btnCalendario = document.getElementById('btnCalendario');
+
+    // Verificar que todos los elementos existen
+    if (!eventRow || !calendarContainer || !btnTarjeta || !btnCalendario) {
+        console.error('Error: No se encontraron todos los elementos necesarios para el toggle de vistas');
+        return;
+    }
+
+    // Función para mostrar tarjetas
+    function mostrarTarjetas() {
+        console.log('Activando vista tarjetas...');
+        eventRow.classList.remove('d-none');
+        calendarContainer.classList.add('d-none');
+        btnTarjeta.classList.add('active');
+        btnCalendario.classList.remove('active');
+    }
+
+    // Función para mostrar calendario  
+    function mostrarCalendario() {
+        console.log('Activando vista calendario...');
+        
+        // Primero mostramos el contenedor
+        eventRow.classList.add('d-none');
+        calendarContainer.classList.remove('d-none');
+        btnCalendario.classList.add('active');
+        btnTarjeta.classList.remove('active');
+        
+        // Inicializar calendario si no existe o actualizarlo si ya existe
+        initializeCalendar();
+        
+        // Forzar un recalculo adicional después de un breve retraso
+        // para garantizar que el contenedor está completamente visible
+        setTimeout(() => {
+            if (calendar) {
+                console.log('Forzando actualización del tamaño del calendario');
+                calendar.updateSize();
+                
+                // Verificar que el calendario es visible
+                const calendarDiv = document.getElementById('calendar');
+                if (calendarDiv) {
+                    const rect = calendarDiv.getBoundingClientRect();
+                    console.log('Dimensiones del calendario:', 
+                                'ancho=' + rect.width, 
+                                'alto=' + rect.height);
+                    
+                    // Si el calendario no tiene dimensiones adecuadas, forzar
+                    if (rect.height < 100) {
+                        console.log('El calendario no tiene altura suficiente, forzando estilo...');
+                        calendarDiv.style.height = '650px';
+                        calendarDiv.style.width = '100%';
+                        calendar.updateSize();
+                    }
+                }
+            }
+        }, 300);
+    }
+
+    // Asegurarnos de inicializar inmediatamente el contenido predeterminado
+    mostrarTarjetas(); // Comenzar con vista tarjetas (predeterminada)
+    
+    // Event listeners con verificación de clics
+    btnTarjeta.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Botón Tarjeta clickeado');
+        mostrarTarjetas();
+    });
+
+    btnCalendario.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Botón Calendario clickeado');
+        mostrarCalendario();
+    });
+
+    // === JavaScript para Eliminar Eventos ===
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const eventoId = this.getAttribute('data-event-id');
+            const eventoTitulo = this.getAttribute('data-event-title');
+            
+            // Confirmación antes de eliminar
+            if (confirm(`¿Estás seguro que deseas eliminar el evento "${eventoTitulo}"?\n\nEsta acción no se puede deshacer.`)) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // Usar fetch para enviar la solicitud POST
+                console.log(`Enviando solicitud para eliminar evento ID: ${eventoId}`);
+                
+                // URL directa para eliminar eventos
+                fetch(`/eventos/${eventoId}/eliminar/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Redirigir a la página principal tras éxito
+                        window.location.href = '/home/';
+                    } else {
+                        console.error('Error al eliminar evento:', response.statusText);
+                        alert('Error al eliminar el evento. Por favor, inténtalo de nuevo.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error de red:', error);
+                    alert('Error de conexión. Por favor, verifica tu conexión e inténtalo de nuevo.');
+                });
+            }
+        });
+    });
+
+}); // Cierre del DOMContentLoaded
+
+</script>
+
+<!-- Modal Crear Evento -->
+<!-- Modal crear evento (solo administradores) -->
+{% if user.rol == 'admin' %}
+<div class="modal fade" id="crearEventoModal" tabindex="-1" aria-labelledby="crearEventoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="crearEventoModalLabel">
+                    <i class="bi bi-calendar-plus me-2"></i>Crear Nuevo Evento
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'crear_evento' %}" id="crearEventoForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="id_titulo" class="form-label">Título del evento *</label>
+                            <input type="text" class="form-control focus-visible" id="id_titulo" name="titulo" required
+                                   placeholder="Ej: Conferencia de Tecnología 2025">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="id_descripcion" class="form-label">Descripción *</label>
+                            <textarea class="form-control focus-visible" id="id_descripcion" name="descripcion" rows="4" required
+                                      placeholder="Describe brevemente el evento, objetivos y audiencia"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_fecha_inicio" class="form-label">Fecha y hora de inicio *</label>
+                            <input type="datetime-local" class="form-control focus-visible" id="id_fecha_inicio" name="fecha_inicio" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_fecha_fin" class="form-label">Fecha y hora de fin</label>
+                            <input type="datetime-local" class="form-control focus-visible" id="id_fecha_fin" name="fecha_fin">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_lugar" class="form-label">Ubicación *</label>
+                            <input type="text" class="form-control focus-visible" id="id_lugar" name="lugar" required
+                                   placeholder="Ej: Auditorio Principal, Campus Samborondón">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_tipo_evento" class="form-label">Tipo de evento *</label>
+                            <select class="form-control focus-visible" id="id_tipo_evento" name="tipo_evento" required>
+                                <option value="">Selecciona un tipo</option>
+                                <option value="conferencia">Conferencia</option>
+                                <option value="taller">Taller</option>
+                                <option value="capacitacion">Capacitación</option>
+                                <option value="evento_deportivo">Evento Deportivo</option>
+                                <option value="evento_cultural">Evento Cultural</option>
+                                <option value="seminario">Seminario</option>
+                                <option value="reunion">Reunión</option>
+                                <option value="ceremonia">Ceremonia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_capacidad_num" class="form-label">Capacidad máxima</label>
+                            <input type="number" class="form-control focus-visible" id="id_capacidad_num" name="capacidad_num" min="1"
+                                   placeholder="Número de participantes">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_imagen_url" class="form-label">URL de imagen</label>
+                            <input type="url" class="form-control focus-visible" id="id_imagen_url" name="imagen_url"
+                                   placeholder="https://ejemplo.com/imagen.jpg">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="submit" form="crearEventoForm" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Crear evento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+</body>
+</html>
